@@ -1,0 +1,76 @@
+﻿@model MVCexample.ViewModel.Guestbook
+
+@{
+    ViewBag.Title = "Index";
+}
+
+<h2>Index</h2>
+<div id="CreateDate">
+    @Html.Action("Create")
+</div>
+@using (Html.BeginForm())
+{
+    @Html.AntiForgeryToken()
+
+    <div class="form-horizontal">
+        <h4>Guestbook</h4>
+        <hr />
+        @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+        <table>
+
+            @if (Model.DataList.Count != 0)
+            {
+                foreach (var item in Model.DataList)
+                {
+                    <tr>
+                        <td>
+                            @Html.DisplayNameFor(model => model.DataList[0].Id)
+                        </td>
+                        <td>
+                            @item.Id
+                        </td>
+                        <td>
+                            @Html.DisplayNameFor(model => model.DataList[0].Name)
+                        </td>
+                        <td>
+                            @item.Name
+                        </td>
+                        <td>
+                            @Html.DisplayNameFor(model => model.DataList[0].CreateTime)
+                        </td>
+                        <td>
+                            @item.CreateTime
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            @Html.DisplayNameFor(model => model.DataList[0].Content)
+                        </td>
+                        <td colspan="3">
+                            @item.Content
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2">
+                            @Html.ActionLink("修改留言", "Edit", "Home", new { Id = item.Id }, null)
+                            @Html.ActionLink("回覆留言", "Reply", "Home", new { Id = item.Id }, null)
+                            @Html.ActionLink("刪除留言", "Delete", "Home", new { Id = item.Id }, null)
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="4">
+                        <h1>尚未留言或查無資料</h1>
+                    </td>
+                </tr>
+            }
+        </table>
+
+    </div>
+}
+@section Scripts {
+    @Scripts.Render("~/bundles/jqueryval")
+}
