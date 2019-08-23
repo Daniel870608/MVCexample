@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Configuration;
 using System.Data.SqlClient;
 using System.Linq;
+using System.Text;
 using System.Web;
 
 namespace MVCexample.Services
@@ -12,28 +13,50 @@ namespace MVCexample.Services
     {
         private readonly string cnstr = ConfigurationManager.ConnectionStrings["Guestbook"].ConnectionString;
 
-        public List<Gbook> GetAllGuestbooks()
+        public List<Gbook> GetAllGuestbooks(ForPaging forPaging,string Search = "")
         {
             List<Gbook> result = new List<Gbook>();
-            string sql = "SELECT * FROM Guestbook";
+            //字串過長，使用StringBuilder
+            StringBuilder sql = new StringBuilder();
+            //搜尋 -> WHERE 條件   ||   分頁  -> ROW_NUMBER() OVER(ORDER BY Id) as Sort
+            sql.Append(@"SELECT * FROM (SELECT ROW_NUMBER() OVER(ORDER BY Id) as Sort,* FROM Guestbook WHERE Name LIKE '%' + '" + Search + "' + '%' or Content LIKE '%' + '" + Search + "' + '%' or Reply LIKE '%' + '" + Search + "' + '%' ) AS Guestbook ");
+            sql.Append(@"WHERE Guestbook.Sort BETWEEN " + ((forPaging.NowPage - 1) * forPaging.ItemNum + 1) + " AND " + forPaging.NowPage * forPaging.ItemNum);
+            string sql_AllData = "SELECT * FROM Guestbook";
             using (SqlConnection conn = new SqlConnection(cnstr))
             {
                 conn.Open();
-                using (SqlCommand cmd = new SqlCommand(sql, conn))
+                using (SqlCommand cmd = new SqlCommand(sql.ToString(), conn))
                 {
                     SqlDataReader rd = cmd.ExecuteReader();
                     while (rd.Read())
                     {
                         Gbook gbook = new Gbook();
-                        gbook.Id = Convert.ToInt32(rd[0]);
-                        gbook.Name = rd[1].ToString();
-                        gbook.Content = rd[2].ToString();
-                        gbook.CreateTime = Convert.ToDateTime(rd[3]);
-                        gbook.Reply = rd[4].ToString();
-                        gbook.ReplyTime = Convert.ToDateTime((string.IsNullOrEmpty(rd[5].ToString())) ? DateTime.Now : rd[5]);
+                        gbook.Id = Convert.ToInt32(rd[1]);
+                        gbook.Name = rd[2].ToString();
+                        gbook.Content = rd[3].ToString();
+                        gbook.CreateTime = Convert.ToDateTime(rd[4]);
+                        gbook.Reply = rd[5].ToString();
+                        if (!Convert.IsDBNull(rd[6]))
+                        {
+                            gbook.ReplyTime = Convert.ToDateTime(rd[6]);
+                        }
                         result.Add(gbook);
                     }
+                    rd.Close();
                 }
+                //計算列數
+                int RowCount = 0;
+                using (SqlCommand cmd = new SqlCommand(sql_AllData, conn))
+                {
+                    SqlDataReader rd = cmd.ExecuteReader();
+                    while (rd.Read())
+                    {
+                        RowCount++;
+                    }
+                    rd.Close();
+                }
+                forPaging.MaxPage = Convert.ToInt32(Math.Ceiling(Convert.ToDouble(RowCount) / forPaging.ItemNum));
+                forPaging.SetRightPage();
                 conn.Close();
             }
             return result;
@@ -71,7 +94,10 @@ namespace MVCexample.Services
                         SearchData.Content = rd[2].ToString();
                         SearchData.CreateTime = Convert.ToDateTime(rd[3]);
                         SearchData.Reply = rd[4].ToString();
-                        SearchData.ReplyTime = Convert.ToDateTime((string.IsNullOrEmpty(rd[5].ToString())) ? DateTime.Now : rd[5]);
+                        if (!string.IsNullOrEmpty(rd[5].ToString()))
+                        {
+                            SearchData.ReplyTime = Convert.ToDateTime(rd[5]);
+                        }
                     }
                 }
             }
@@ -81,7 +107,7 @@ namespace MVCexample.Services
 
         public void EditGuestbook(Gbook EditData)
         {
-            if (string.IsNullOrEmpty(EditData.ReplyTime.ToString()))
+            if (string.IsNullOrEmpty(EditData.Reply))
             {
                 string sql = "UPDATE Guestbook SET Name='" + EditData.Name + "',Content='" + EditData.Content + "' WHERE Id=" + EditData.Id;
                 using (SqlConnection conn = new SqlConnection(cnstr))
@@ -102,7 +128,7 @@ namespace MVCexample.Services
 
         public void ReplyGuestbook(Gbook ReplyData)
         {
-            if (string.IsNullOrEmpty(ReplyData.ReplyTime.ToString()))
+            if (!string.IsNullOrEmpty(ReplyData.Reply))
             {
                 ReplyData.ReplyTime = DateTime.Now;
                 string sql = "UPDATE Guestbook SET Reply='" + ReplyData.Reply + "',ReplyTime ='" + ReplyData.ReplyTime.ToString("yyyy/MM/dd HH:mm:ss") + "' WHERE Id=" + ReplyData.Id;

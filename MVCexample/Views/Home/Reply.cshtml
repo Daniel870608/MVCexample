@@ -36,9 +36,9 @@
             </td>
         </tr>
     </table>
-    if (Model.ReplyTime == null)
+    if (string.IsNullOrEmpty(Model.Reply))
     {
-        <input type="submit" value="修改" />
+        <input type="submit" value="回覆" />
     }
     else
     {

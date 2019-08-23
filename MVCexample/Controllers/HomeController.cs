@@ -12,10 +12,11 @@ namespace MVCexample.Controllers
     public class HomeController : Controller
     {
         public GuestbookService guestbookService = new GuestbookService();
-        public ActionResult Index()
+        public ActionResult Index(string Search = "",int page = 1)
         {
             Guestbook IndexViewModel = new Guestbook();
-            IndexViewModel.DataList = guestbookService.GetAllGuestbooks();
+            IndexViewModel.ForPaging = new ForPaging(page);
+            IndexViewModel.DataList = guestbookService.GetAllGuestbooks(IndexViewModel.ForPaging,Search);
             return View(IndexViewModel);
         }
 

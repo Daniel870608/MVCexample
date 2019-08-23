@@ -33,6 +33,9 @@ namespace MVCexample.Models
 
         [DisplayName("回覆時間")]
         public DateTime ReplyTime { get; set; }
-
+        
+        public Gbook()
+        {
+        }
     }
 }

@@ -8,6 +8,21 @@
 <div id="CreateDate">
     @Html.Action("Create")
 </div>
+@using (Html.BeginForm("Index", "Home", FormMethod.Get))
+{
+    <table>
+        <tr>
+            <td>
+                @Html.DisplayNameFor(model => model.Search)
+            </td>
+            <td>
+                @Html.TextBoxFor(model => model.Search)
+            </td>
+
+        </tr>
+    </table>
+    <input type="submit" value="搜尋" />
+}
 @using (Html.BeginForm())
 {
     @Html.AntiForgeryToken()
@@ -51,6 +66,28 @@
                         </td>
                     </tr>
                     <tr>
+                        <td>
+                            @Html.DisplayNameFor(model => model.DataList[0].Reply)
+                        </td>
+                        <td>
+                            @if (!string.IsNullOrEmpty(item.Reply))
+                            {
+                                @item.Reply
+                            }
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            @Html.DisplayNameFor(model => model.DataList[0].ReplyTime)
+                        </td>
+                        <td>
+                            @if (!string.IsNullOrEmpty(item.Reply))
+                            {
+                                @item.ReplyTime
+                            }
+                        </td>
+                    </tr>
+                    <tr>
                         <td colspan="2">
                             @Html.ActionLink("修改留言", "Edit", "Home", new { Id = item.Id }, null)
                             @Html.ActionLink("回覆留言", "Reply", "Home", new { Id = item.Id }, null)
@@ -67,6 +104,38 @@
                     </td>
                 </tr>
             }
+            <tr>
+                <td>
+                    @if (Model.ForPaging.NowPage > 1)
+                    {
+                        @Html.ActionLink("<<", "Index", "Home", new { page = 1, Search = Model.Search }, null)
+                        @Html.ActionLink("<", "Index", "Home", new { page = Model.ForPaging.NowPage - 1, Search = Model.Search }, null)
+                    }
+                </td>
+                <td>
+                    @for (var page = (Model.ForPaging.NowPage - 6); page < (Model.ForPaging.NowPage + 6);page++)
+                    {
+                        if ((page > 0) && (page <= Model.ForPaging.MaxPage))
+                        {
+                            if (page == Model.ForPaging.NowPage)
+                            {
+                                <b>@page</b>
+                            }
+                            else
+                            {
+                                @Html.ActionLink(page.ToString(),"Index","Home",new {page = page, Search = Model.Search },null)
+                            }
+                        }
+                    }
+                </td>
+                <td>
+                    @if (Model.ForPaging.NowPage < Model.ForPaging.MaxPage)
+                    {
+                        @Html.ActionLink(">", "Index", "Home", new { page = Model.ForPaging.NowPage + 1, Search = Model.Search }, null)
+                        @Html.ActionLink(">>", "Index", "Home", new { page = Model.ForPaging.MaxPage, Search = Model.Search }, null)
+                    }
+                </td>
+            </tr>
         </table>
 
     </div>
